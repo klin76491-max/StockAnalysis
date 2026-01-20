@@ -1,53 +1,52 @@
 #%%
-import Query.Query as gd
-import Strategy.Strategy as gcs
-
 import pandas as pd
-from backtesting import Backtest
+import backtrader as bt
+import Query.Query as qry
+import Strategy.Strategy as strategy
+import Plot.Plot as plot
 
 if __name__ == '__main__':
-    """大盤資料有 volumn 的期間：20030102 ~ 20261231"""
-    table = 'yfince_TWII_1950_2026'
-    db = 'GenData/data/daily/stock_data.db'
-    from_date = '2025-10-05'
-    to_date = '2027-01-01'
-    # 資料欄位 Date Close High Low Open Volume
-    df = gd.GetData(db = db, table = table, from_date = from_date, to_date = to_date)
+    # 1. 準備資料
+    df = qry.GetData(db='GenData/data/daily/stock_data.db', 
+                     table='yfince_TWII_1950_2026', 
+                     from_date='2025-10-05', to_date='2027-01-01')
     
+    df = df.reset_index()
+    df['Date'] = pd.to_datetime(df['Date'])
+    df = df.set_index('Date')[['Open', 'High', 'Low', 'Close', 'Volume']]
+
+    # 2. 設定回測
+    cerebro = bt.Cerebro()
+    cerebro.adddata(bt.feeds.PandasData(dataname=df))
+    cerebro.addstrategy(strategy.GoldenCrossStrategyBacktrader)
+    cerebro.broker.setcash(100000.0)
+    cerebro.broker.setcommission(commission=0.002)
+    cerebro.addanalyzer(bt.analyzers.TimeReturn, _name='returns')
+
+    # 3. 執行
+    print(f"初始資金: {cerebro.broker.getvalue():.2f}")
+    results = cerebro.run()
+    final_val = cerebro.broker.getvalue()
+    print(f"最終資金: {final_val:.2f}")
+
+    # 4. 處理結果
+    strat_res = results[0]
+    trades = pd.DataFrame(strat_res.trades_log)
     
-    # 執行回測
-    bt = Backtest(df, gcs.GoldenCrossStrategy, cash=100000, commission=.002)
-    stats = bt.run()
-    
-    # 獲取交易日誌
-    trades_df = pd.DataFrame(stats._strategy.trades_log)
-    
-    # 顯示回測結果
-    print("=" * 60)
-    print("MA5/MA20 黃金交叉策略回測結果")
-    print("=" * 60)
-    print(stats)
-    print("\n" + "=" * 60)
-    print("重要指標統計")
-    print("=" * 60)
-    print(f"初始資金: ${stats['Start']:.2f}")
-    print(f"最終資金: ${stats['End']:.2f}")
-    print(f"總報酬率: {stats['Return [%]']:.2f}%")
-    print(f"年化報酬率: {stats['Return (Ann.) [%]']:.2f}%")
-    print(f"最大回撤: {stats['Max. Drawdown [%]']:.2f}%")
-    print(f"勝率: {stats['Win Rate [%]']:.2f}%")
-    print(f"獲利因子: {stats['Profit Factor']:.2f}")
-    print(f"交易次數: {stats['# Trades']:.0f}")
-    print(f"夏普比例: {stats['Sharpe Ratio']:.2f}")
-    
-    # 顯示交易詳情
-    print("\n" + "=" * 80)
-    print("交易詳情明細")
-    print("=" * 80)
-    print(trades_df.to_string(index=False))
-    
-    # 繪製回測圖表
-    bt.plot(filename='backtest_result.html')
-    print("\n圖表已保存到: backtest_result.html")
+    returns = pd.Series(strat_res.analyzers.returns.get_analysis())
+    equity = (1 + returns).cumprod() * 100000
+    equity = equity.reindex(df.index, method='ffill').fillna(100000)
+
+    if not trades.empty:
+        print("\n交易紀錄:")
+        # 印出 dataframe 格式對齊的版本
+        print(trades.to_string(index=False))
+
+    # 5. 繪圖 poltly 客製化圖表 
+    plot.generate_plotly_chart(df, trades, equity, final_val, 100000).write_html('Report/backtest_result.html')
+    print("\n圖表已保存: Report backtrader_result.html")
+
+    # 6. 繪圖 backtrader 圖表
+    cerebro.plot()[0][0].savefig('Report/backtrader_result.png')    
     
 #%%
