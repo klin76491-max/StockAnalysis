@@ -8,14 +8,14 @@ class BaseLogStrategy(bt.Strategy):
     def notify_order(self, order):
         if order.status == order.Completed:
             self.trades_log.append({
-                '時間': self.data.datetime.date(0),
-                '交易動作': '買進' if order.isbuy() else '賣出',
-                '執行價格': order.executed.price,
-                '執行當日收盤價': self.data.close[0],
-                '執行當日開盤價': self.data.open[0],
-                '執行前日收盤價': self.data.close[-1],
-                '執行前日開盤價': self.data.open[-1],
-                '目前資金': self.broker.getvalue()
+                'Time': self.data.datetime.date(0),
+                'TransactionAction': 'buy' if order.isbuy() else 'sell',
+                'ExecutionPrice': order.executed.price,
+                'ClosingPriceExecutionDay': self.data.close[0],
+                'OpeningPriceExecutionDay': self.data.open[0],
+                'ClosingPriceBeforeExecutionDay': self.data.close[-1],
+                'OpeningPriceBeforeExecutionDay': self.data.open[-1],
+                'CurrentFunds': self.broker.getvalue()
             })
 
 class GoldenCrossStrategyBacktrader(BaseLogStrategy):
@@ -28,6 +28,7 @@ class GoldenCrossStrategyBacktrader(BaseLogStrategy):
     params = (('ma5', 5), ('ma20', 20))
     
     def __init__(self):
+        super().__init__()
         self.ma5 = bt.ind.SMA(self.data.close, period=self.params.ma5)
         self.ma20 = bt.ind.SMA(self.data.close, period=self.params.ma20)
         self.crossover = bt.ind.CrossOver(self.ma5, self.ma20)
@@ -46,6 +47,7 @@ class RSIStrategyBacktrader(BaseLogStrategy):
     params = (('period', 14), ('upper', 70), ('lower', 30))
     
     def __init__(self):
+        super().__init__()
         self.rsi = bt.ind.RSI(self.data.close, period=self.params.period)
     
     def next(self):
@@ -67,6 +69,7 @@ class MACDStrategyBacktrader(BaseLogStrategy):
     )
     
     def __init__(self):
+        super().__init__()
         self.macd = bt.ind.MACD(
             self.data.close,
             period_me1=self.params.period_me1,

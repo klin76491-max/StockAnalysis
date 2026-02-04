@@ -70,13 +70,13 @@ def generate_plotly_chart(df, trades_df, equity_curve, final_value, start_value)
     
     # 新增買賣點標記
     if len(trades_df) > 0:
-        buy_trades = trades_df[trades_df['交易動作'] == '買進']
-        sell_trades = trades_df[trades_df['交易動作'] == '賣出']
+        buy_trades = trades_df[trades_df['TransactionAction'] == 'buy']
+        sell_trades = trades_df[trades_df['TransactionAction'] == 'sell']
         
         # 買進點 (綠色三角)
         if len(buy_trades) > 0:
             buy_prices = []
-            for trade_date in buy_trades['時間']:
+            for trade_date in buy_trades['Time']:
                 # 轉換日期格式以匹配df索引
                 try:
                     if isinstance(trade_date, pd.Timestamp):
@@ -94,7 +94,7 @@ def generate_plotly_chart(df, trades_df, equity_curve, final_value, start_value)
             
             fig.add_trace(
                 go.Scatter(
-                    x=buy_trades['時間'],
+                    x=buy_trades['Time'],
                     y=buy_prices,
                     mode='markers',
                     name='Buy',
@@ -106,7 +106,7 @@ def generate_plotly_chart(df, trades_df, equity_curve, final_value, start_value)
         # 賣出點 (紅色三角)
         if len(sell_trades) > 0:
             sell_prices = []
-            for trade_date in sell_trades['時間']:
+            for trade_date in sell_trades['Time']:
                 # 轉換日期格式以匹配df索引
                 try:
                     if isinstance(trade_date, pd.Timestamp):
@@ -124,7 +124,7 @@ def generate_plotly_chart(df, trades_df, equity_curve, final_value, start_value)
             
             fig.add_trace(
                 go.Scatter(
-                    x=sell_trades['時間'],
+                    x=sell_trades['Time'],
                     y=sell_prices,
                     mode='markers',
                     name='Sell',

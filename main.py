@@ -26,7 +26,7 @@ if __name__ == '__main__':
     # 2. 設定回測
     cerebro = bt.Cerebro()
     cerebro.adddata(bt.feeds.PandasData(dataname=df))
-    cerebro.addstrategy(strategy.VWAPStrategyBacktrader)
+    cerebro.addstrategy(strategy.GoldenCrossStrategyBacktrader)
     cerebro.broker.setcash(initial_cash)
     cerebro.broker.setcommission(commission=commission)
     cerebro.addanalyzer(bt.analyzers.TimeReturn, _name='returns')
@@ -67,8 +67,8 @@ if __name__ == '__main__':
     annual_return_pct = ((1 + total_return_pct) ** (365/days_diff) - 1) * 100 if days_diff > 0 else 0.0
     
     # 取得進出場時間
-    first_entry = str(strat_res.trades_log[0]['時間']) if strat_res.trades_log else None
-    last_exit = str(strat_res.trades_log[-1]['時間']) if strat_res.trades_log else None
+    first_entry = str(strat_res.trades_log[0]['Time']) if strat_res.trades_log else None
+    last_exit = str(strat_res.trades_log[-1]['Time']) if strat_res.trades_log else None
     
     # 建立回測結果物件
     backtest_result = report.BacktestResult(
