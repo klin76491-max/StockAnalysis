@@ -1,6 +1,24 @@
 import backtrader as bt
 
-class GoldenCrossStrategyBacktrader(bt.Strategy):
+class BaseLogStrategy(bt.Strategy):
+    """基礎策略類別，用於處理交易記錄"""
+    def __init__(self):
+        self.trades_log = []
+
+    def notify_order(self, order):
+        if order.status == order.Completed:
+            self.trades_log.append({
+                '時間': self.data.datetime.date(0),
+                '交易動作': '買進' if order.isbuy() else '賣出',
+                '執行價格': order.executed.price,
+                '執行當日收盤價': self.data.close[0],
+                '執行當日開盤價': self.data.open[0],
+                '執行前日收盤價': self.data.close[-1],
+                '執行前日開盤價': self.data.open[-1],
+                '目前資金': self.broker.getvalue()
+            })
+
+class GoldenCrossStrategyBacktrader(BaseLogStrategy):
     '''
     MA 黃金交叉策略
     參數：ma5 (5日均線), ma20 (20日均線)
@@ -13,7 +31,6 @@ class GoldenCrossStrategyBacktrader(bt.Strategy):
         self.ma5 = bt.ind.SMA(self.data.close, period=self.params.ma5)
         self.ma20 = bt.ind.SMA(self.data.close, period=self.params.ma20)
         self.crossover = bt.ind.CrossOver(self.ma5, self.ma20)
-        self.trades_log = []
     
     def next(self):
         if not self.position and self.crossover > 0:
@@ -21,20 +38,7 @@ class GoldenCrossStrategyBacktrader(bt.Strategy):
         elif self.position and self.crossover < 0:
             self.close()
 
-    def notify_order(self, order):
-        if order.status == order.Completed:
-            self.trades_log.append({
-                '時間': self.data.datetime.date(0),
-                '交易動作': '買進' if order.isbuy() else '賣出',
-                '執行價格': order.executed.price,
-                '執行當日收盤價': self.data.close[0],
-                '執行當日開盤價': self.data.open[0],
-                '執行前日收盤價': self.data.close[-1],
-                '執行前日開盤價': self.data.open[-1],
-                '目前資金': self.broker.getvalue()
-            })
-
-class RSIStrategyBacktrader(bt.Strategy):
+class RSIStrategyBacktrader(BaseLogStrategy):
     '''參數：預設 RSI 週期為 14，超買線為 70，超賣線為 30。
 買進：當沒有持倉且 RSI 低於 30（超賣）時買進。
 賣出：當持有倉位且 RSI 高於 70（超買）時平倉。
@@ -43,7 +47,6 @@ class RSIStrategyBacktrader(bt.Strategy):
     
     def __init__(self):
         self.rsi = bt.ind.RSI(self.data.close, period=self.params.period)
-        self.trades_log = []
     
     def next(self):
         if not self.position and self.rsi < self.params.lower:
@@ -51,20 +54,7 @@ class RSIStrategyBacktrader(bt.Strategy):
         elif self.position and self.rsi > self.params.upper:
             self.close()
 
-    def notify_order(self, order):
-        if order.status == order.Completed:
-            self.trades_log.append({
-                '時間': self.data.datetime.date(0),
-                '交易動作': '買進' if order.isbuy() else '賣出',
-                '執行價格': order.executed.price,
-                '執行當日收盤價': self.data.close[0],
-                '執行當日開盤價': self.data.open[0],
-                '執行前日收盤價': self.data.close[-1],
-                '執行前日開盤價': self.data.open[-1],
-                '目前資金': self.broker.getvalue()
-            })
-
-class MACDStrategyBacktrader(bt.Strategy):
+class MACDStrategyBacktrader(BaseLogStrategy):
     '''參數：預設快線週期 12，慢線週期 26，訊號線週期 9。
 指標：計算 MACD 線與訊號線 (Signal Line)。
 買進：當 MACD 線向上穿越訊號線（黃金交叉）且無持倉時買進。
@@ -84,44 +74,12 @@ class MACDStrategyBacktrader(bt.Strategy):
             period_signal=self.params.period_signal
         )
         self.crossover = bt.ind.CrossOver(self.macd.macd, self.macd.signal)
-        self.trades_log = []
     
     def next(self):
         if not self.position and self.crossover > 0:
             self.buy()
         elif self.position and self.crossover < 0:
             self.close()
-
-    def notify_order(self, order):
-        if order.status == order.Completed:
-            self.trades_log.append({
-                '時間': self.data.datetime.date(0),
-                '交易動作': '買進' if order.isbuy() else '賣出',
-                '執行價格': order.executed.price,
-                '執行當日收盤價': self.data.close[0],
-                '執行當日開盤價': self.data.open[0],
-                '執行前日收盤價': self.data.close[-1],
-                '執行前日開盤價': self.data.open[-1],
-                '目前資金': self.broker.getvalue()
-            })
-
-class BaseLogStrategy(bt.Strategy):
-    """基礎策略類別，用於處理交易記錄"""
-    def __init__(self):
-        self.trades_log = []
-
-    def notify_order(self, order):
-        if order.status == order.Completed:
-            self.trades_log.append({
-                '時間': self.data.datetime.date(0),
-                '交易動作': '買進' if order.isbuy() else '賣出',
-                '執行價格': order.executed.price,
-                '執行當日收盤價': self.data.close[0],
-                '執行當日開盤價': self.data.open[0],
-                '執行前日收盤價': self.data.close[-1],
-                '執行前日開盤價': self.data.open[-1],
-                '目前資金': self.broker.getvalue()
-            })
 
 class KDStrategyBacktrader(BaseLogStrategy):
     '''
@@ -297,46 +255,6 @@ class VolumeStrategyBacktrader(BaseLogStrategy):
         if not self.position and self.data.close > self.data.open and self.data.volume > self.vol_ma * self.params.vol_mult:
             self.buy()
         elif self.position and self.data.close < self.data.open and self.data.volume > self.vol_ma * self.params.vol_mult:
-            self.close()
-
-class OnBalanceVolume(bt.Indicator):
-    '''
-    OBV 能量潮指標
-    邏輯：
-    - 收盤價上漲，成交量加到 OBV
-    - 收盤價下跌，成交量從 OBV 扣除
-    - 收盤價持平，OBV 不變
-    '''
-    lines = ('obv',)
-    plotinfo = dict(subplot=True)
-    def __init__(self):
-        self.addminperiod(2)
-    def next(self):
-        if self.data.close[0] > self.data.close[-1]:
-            self.lines.obv[0] = self.lines.obv[-1] + self.data.volume[0]
-        elif self.data.close[0] < self.data.close[-1]:
-            self.lines.obv[0] = self.lines.obv[-1] - self.data.volume[0]
-        else:
-            self.lines.obv[0] = self.lines.obv[-1]
-
-class OBVStrategyBacktrader(BaseLogStrategy):
-    '''
-    OBV 能量潮策略
-    參數：period_ma (20)
-    買進：OBV > OBV MA (量能趨勢向上)
-    賣出：OBV < OBV MA (量能趨勢向下)
-    '''
-    params = (('period_ma', 20),)
-    
-    def __init__(self):
-        super().__init__()
-        self.obv = OnBalanceVolume(self.data)
-        self.obv_ma = bt.ind.SMA(self.obv, period=self.params.period_ma)
-    
-    def next(self):
-        if not self.position and self.obv > self.obv_ma:
-            self.buy()
-        elif self.position and self.obv < self.obv_ma:
             self.close()
 
 class VWAPStrategyBacktrader(BaseLogStrategy):

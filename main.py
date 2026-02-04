@@ -9,8 +9,8 @@ import GenData.StrategyReport as report
 if __name__ == '__main__':
     # 設定回測參數
     symbol = 'TWII'
-    from_date = '2025-01-01'
-    to_date = '2027-01-01'
+    from_date = '2023-01-01'
+    to_date = '2026-01-01'
     initial_cash = 100000.0
     commission = 0.002
 
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     # 2. 設定回測
     cerebro = bt.Cerebro()
     cerebro.adddata(bt.feeds.PandasData(dataname=df))
-    cerebro.addstrategy(strategy.GoldenCrossStrategyBacktrader)
+    cerebro.addstrategy(strategy.VWAPStrategyBacktrader)
     cerebro.broker.setcash(initial_cash)
     cerebro.broker.setcommission(commission=commission)
     cerebro.addanalyzer(bt.analyzers.TimeReturn, _name='returns')
