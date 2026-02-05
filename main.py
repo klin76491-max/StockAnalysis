@@ -5,6 +5,8 @@ import Query.Query as qry
 import Strategy.Strategy as strategy
 import Plot.Plot as plot
 import GenData.StrategyReport as report
+import GenData.SaveLog as savelog
+import uuid
 
 if __name__ == '__main__':
     # 設定回測參數
@@ -70,8 +72,12 @@ if __name__ == '__main__':
     first_entry = str(strat_res.trades_log[0]['Time']) if strat_res.trades_log else None
     last_exit = str(strat_res.trades_log[-1]['Time']) if strat_res.trades_log else None
     
+    # 生成唯一識別碼 (UUID)
+    backtest_uid = str(uuid.uuid4())
+
     # 建立回測結果物件
     backtest_result = report.BacktestResult(
+        backtest_uuid=backtest_uid,
         strategy_name=strat_res.__class__.__name__,
         symbol=symbol,
         timeframe='daily',
@@ -94,6 +100,10 @@ if __name__ == '__main__':
     
     # 存入資料庫
     report.save_backtest_result('GenData/report/daily/backtest_results.db', backtest_result)
+
+    # 儲存交易詳細紀錄 (使用相同的 UUID 連結)
+    if not trades.empty:
+        savelog.save_trade_logs('GenData/log/daily/trade_logs.db', trades, backtest_uid)
 
     if not trades.empty:
         print("\n交易紀錄:")

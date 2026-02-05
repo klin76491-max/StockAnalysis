@@ -1,5 +1,5 @@
 #%%
-from sqlalchemy import create_engine, String, Float, Integer, Text
+from sqlalchemy import create_engine, String, Float, Integer, Text, inspect, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
 import os
 from typing import Optional
@@ -17,6 +17,9 @@ class BacktestResult(Base):
 
     # 自動生成欄位 (Primary Key)
     run_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    # 新增唯一識別碼 (用於連結 Trade Log)
+    backtest_uuid: Mapped[str] = mapped_column(String, unique=True)
 
     # 必填欄位
     strategy_name: Mapped[str] = mapped_column(String)          # 2. 策略名稱
