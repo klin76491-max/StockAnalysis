@@ -8,6 +8,8 @@
 - **Query**: 根據時間範圍從數據庫提取篩選後的OHLCV數據
 - **Strategy**: 實現MA5/MA20黃金交叉策略，執行交易信號生成與持倉管理
 - **main.py**: 整合各模組流程，輸出詳細績效指標與互動式HTML報告
+- **Infrastructure**: 負責資料持久化與資料庫存取，使用 SQLAlchemy ORM 管理回測結果
+- **main.py**: 整合各模組流程，輸出詳細績效指標、互動式HTML報告並儲存回測紀錄至資料庫
 
 ## 快速開始
 
@@ -25,6 +27,9 @@ python main.py
 - 初始資金: $100,000
 - 時間範圍: 2025-10-05 ~ 2027-01-01
 - 輸出: backtest_result.html (互動式圖表報告)
+- 輸出: 
+  - `backtest_result.html` (互動式圖表報告)
+  - `backtest_results.db` (回測數據紀錄資料庫)
 
 ## 績效指標
 
@@ -43,6 +48,7 @@ python main.py
 ├── GenData/          # 數據準備層
 ├── Query/            # 數據查詢層
 ├── Strategy/         # 策略執行層
+├── Infrastructure/   # 基礎設施層 (資料庫模型與存取)
 ├── main.py           # 主控制程序
 └── backtest_result.html  # 回測報告
 ```

@@ -1,6 +1,7 @@
 #%%
-from sqlalchemy import create_engine, String, Float, Integer, Text, inspect, text
+from sqlalchemy import create_engine, String, Float, Integer, Text, inspect, text, DateTime
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
+from datetime import datetime
 import os
 from typing import Optional
 
@@ -13,7 +14,7 @@ class BacktestResult(Base):
     對應資料庫 backtest_results 資料表的欄位
     使用 SQLAlchemy ORM 定義
     """
-    __tablename__ = 'backtest_results'
+    __tablename__ = 'Result_Strategy'
 
     # 自動生成欄位 (Primary Key)
     run_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -36,13 +37,19 @@ class BacktestResult(Base):
     commission_rate: Mapped[float] = mapped_column(Float)       # 17. 手續費率
     slippage: Mapped[float] = mapped_column(Float)              # 18. 滑價假設
     parameter_note: Mapped[str] = mapped_column(Text)           # 19. 策略參數摘要
-    
+
     # 可為空值的欄位 (Optional)
     first_entry_date: Mapped[Optional[str]] = mapped_column(String, nullable=True)    # 7. 最初實際進場時間
     last_exit_date: Mapped[Optional[str]] = mapped_column(String, nullable=True)      # 8. 最後一次平倉時間
     total_holding_times: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)# 9. 總持有時間
     annual_return: Mapped[Optional[float]] = mapped_column(Float, nullable=True)      # 12. 年化報酬率
 
+    # Audit 欄位
+    create_user: Mapped[str] = mapped_column(String, default='System')
+    create_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    modify_user: Mapped[str] = mapped_column(String, default='System')
+    modify_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
+    
 def save_backtest_result(db_path: str, result: BacktestResult):
     """
     將回測結果儲存至 SQLite 資料庫 (使用 SQLAlchemy)。

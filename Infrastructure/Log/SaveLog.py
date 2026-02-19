@@ -8,10 +8,10 @@ class Base(DeclarativeBase):
 
 class TradeLog(Base):
     """
-    交易紀錄資料模型
+    交易紀錄資料模型 Model
     對應資料庫 trade_logs 資料表的欄位
     """
-    __tablename__ = 'trade_logs'
+    __tablename__ = 'LogTrade'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     backtest_uuid: Mapped[str] = mapped_column(String, index=True) # 連結 BacktestResult 的 UUID

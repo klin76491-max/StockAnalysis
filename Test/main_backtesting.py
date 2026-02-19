@@ -1,6 +1,6 @@
 #%%
-import Query.Query as gd
-import Strategy.StrategyBacktesting as gcs
+import Infrastructure.Query.Query as gd
+import Test.StrategyBacktesting as gcs
 
 import pandas as pd
 from backtesting import Backtest
